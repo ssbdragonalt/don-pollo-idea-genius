@@ -16,10 +16,9 @@ const Index = () => {
   const [isListening, setIsListening] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
 
-  // Speech recognition setup
   useEffect(() => {
     if (!("webkitSpeechRecognition" in window)) {
-      toast.error("Speech recognition is not supported in your browser");
+      toast.error("Speech recognition is not supported in your browser. Try Chrome!");
       return;
     }
 
@@ -35,26 +34,21 @@ const Index = () => {
       setInput(transcript);
     };
 
-    recognition.onerror = (event: any) => {
-      console.error(event.error);
-      setIsListening(false);
-      toast.error("Error with speech recognition");
+    recognition.onend = () => {
+      if (isListening) {
+        handleSubmit({ preventDefault: () => {} } as any);
+        setIsListening(false);
+      }
     };
+
+    if (isListening) {
+      recognition.start();
+    }
 
     return () => {
       recognition.stop();
     };
-  }, []);
-
-  const toggleListening = () => {
-    const recognition = new (window as any).webkitSpeechRecognition();
-    if (isListening) {
-      recognition.stop();
-    } else {
-      recognition.start();
-    }
-    setIsListening(!isListening);
-  };
+  }, [isListening]);
 
   const speak = async (text: string) => {
     const utterance = new SpeechSynthesisUtterance(text);
@@ -111,36 +105,17 @@ const Index = () => {
           <p className="text-lg text-muted-foreground mb-8">
             Your AI-powered startup advisor with a sense of humor
           </p>
-          
-          <div className="relative w-64 h-64 mx-auto mb-8">
-            <Lottie
-              loop
-              animationData={chickenAnimation}
-              play={isThinking || isListening}
-              style={{ width: "100%", height: "100%" }}
-            />
-          </div>
 
-          <button
-            onClick={toggleListening}
-            className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-full font-medium hover:opacity-90 transition-opacity mb-8"
-          >
-            {isListening ? (
-              <>
-                <MicOff className="mr-2 h-5 w-5" />
-                Stop Listening
-              </>
-            ) : (
-              <>
-                <Mic className="mr-2 h-5 w-5" />
-                Start Talking
-              </>
-            )}
-          </button>
-        </motion.div>
+          <div className="glass-panel p-6 mb-8 relative">
+            <div className="relative w-48 h-48 mx-auto mb-4">
+              <Lottie
+                loop
+                animationData={chickenAnimation}
+                play={isThinking || isListening}
+                style={{ width: "100%", height: "100%" }}
+              />
+            </div>
 
-        <div className="glass-panel p-6 mb-8">
-          <div className="space-y-4 mb-6 max-h-[500px] overflow-y-auto">
             {messages.map((message, index) => (
               <motion.div
                 key={index}
@@ -151,24 +126,45 @@ const Index = () => {
                 {message.text}
               </motion.div>
             ))}
-          </div>
 
-          <form onSubmit={handleSubmit} className="flex gap-2">
-            <input
-              type="text"
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Share your groundbreaking idea..."
-              className="flex-1 px-4 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-            />
-            <button
-              type="submit"
-              className="px-6 py-2 bg-primary text-white rounded-xl hover:opacity-90 transition-opacity"
-            >
-              <MessageSquare className="h-5 w-5" />
-            </button>
-          </form>
-        </div>
+            <div className="mt-4 flex flex-col items-center gap-4">
+              <button
+                onClick={() => setIsListening(!isListening)}
+                className={`inline-flex items-center px-6 py-3 ${
+                  isListening ? "bg-destructive" : "bg-primary"
+                } text-white rounded-full font-medium hover:opacity-90 transition-opacity`}
+              >
+                {isListening ? (
+                  <>
+                    <MicOff className="mr-2 h-5 w-5" />
+                    Stop Listening
+                  </>
+                ) : (
+                  <>
+                    <Mic className="mr-2 h-5 w-5" />
+                    Start Talking
+                  </>
+                )}
+              </button>
+
+              <form onSubmit={handleSubmit} className="flex w-full gap-2">
+                <input
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Or type your groundbreaking idea..."
+                  className="flex-1 px-4 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                />
+                <button
+                  type="submit"
+                  className="px-6 py-2 bg-primary text-white rounded-xl hover:opacity-90 transition-opacity"
+                >
+                  <MessageSquare className="h-5 w-5" />
+                </button>
+              </form>
+            </div>
+          </div>
+        </motion.div>
 
         <div className="text-center text-sm text-muted-foreground">
           <p>Powered by memes and the spirit of Silicon Valley</p>
