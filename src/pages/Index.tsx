@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { MessageSquare, Sparkles, Mic, MicOff } from "lucide-react";
 import Lottie from "react-lottie-player";
 import { GoogleGenerativeAI } from "@google/generative-ai";
@@ -15,6 +15,8 @@ const Index = () => {
   const [input, setInput] = useState("");
   const [isListening, setIsListening] = useState(false);
   const [isThinking, setIsThinking] = useState(false);
+  const [currentSpeechBubble, setCurrentSpeechBubble] = useState("");
+  const [showChatbox, setShowChatbox] = useState(false);
 
   useEffect(() => {
     if (!("webkitSpeechRecognition" in window)) {
@@ -70,6 +72,7 @@ const Index = () => {
       const text = response.text();
       
       setMessages(prev => [...prev, { text, isAi: true }]);
+      setCurrentSpeechBubble(text);
       speak(text);
     } catch (error) {
       toast.error("Error generating response");
@@ -106,31 +109,50 @@ const Index = () => {
             Your AI-powered startup advisor with a sense of humor
           </p>
 
-          <div className="glass-panel p-6 mb-8 relative">
-            <div className="relative w-48 h-48 mx-auto mb-4">
-              <Lottie
-                loop
-                animationData={chickenAnimation}
-                play={isThinking || isListening}
-                style={{ width: "100%", height: "100%" }}
-              />
-            </div>
-
-            {messages.map((message, index) => (
+          <div className="relative">
+            {/* 3D Chicken with Speech Bubble */}
+            <div className="fixed bottom-20 right-20 z-50">
               <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={`chat-bubble ${message.isAi ? "chat-bubble-ai" : "chat-bubble-user"}`}
+                animate={{
+                  y: [0, -10, 0],
+                  rotate: isThinking ? [0, 5, -5, 0] : 0,
+                }}
+                transition={{
+                  duration: 2,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+                className="relative"
               >
-                {message.text}
+                <div className="w-40 h-40">
+                  <Lottie
+                    loop
+                    animationData={chickenAnimation}
+                    play={true}
+                    style={{ width: "100%", height: "100%" }}
+                  />
+                </div>
+                
+                <AnimatePresence>
+                  {currentSpeechBubble && (
+                    <motion.div
+                      initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.8, y: 20 }}
+                      className="absolute -top-32 right-0 glass-panel p-4 rounded-2xl max-w-[300px] text-left"
+                    >
+                      <div className="relative">
+                        {currentSpeechBubble}
+                        <div className="absolute -bottom-8 right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[20px] border-white/20 border-r-[10px] border-r-transparent" />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
-            ))}
 
-            <div className="mt-4 flex flex-col items-center gap-4">
               <button
                 onClick={() => setIsListening(!isListening)}
-                className={`inline-flex items-center px-6 py-3 ${
+                className={`mt-4 inline-flex items-center px-6 py-3 ${
                   isListening ? "bg-destructive" : "bg-primary"
                 } text-white rounded-full font-medium hover:opacity-90 transition-opacity`}
               >
@@ -146,29 +168,56 @@ const Index = () => {
                   </>
                 )}
               </button>
-
-              <form onSubmit={handleSubmit} className="flex w-full gap-2">
-                <input
-                  type="text"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Or type your groundbreaking idea..."
-                  className="flex-1 px-4 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <button
-                  type="submit"
-                  className="px-6 py-2 bg-primary text-white rounded-xl hover:opacity-90 transition-opacity"
-                >
-                  <MessageSquare className="h-5 w-5" />
-                </button>
-              </form>
             </div>
+
+            {/* Toggle Chat Interface Button */}
+            <button
+              onClick={() => setShowChatbox(!showChatbox)}
+              className="fixed bottom-4 left-4 z-50 bg-primary text-white p-4 rounded-full hover:opacity-90 transition-opacity"
+            >
+              <MessageSquare />
+            </button>
+
+            {/* Original Chat Interface */}
+            <AnimatePresence>
+              {showChatbox && (
+                <motion.div
+                  initial={{ opacity: 0, x: -300 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -300 }}
+                  className="fixed left-4 bottom-20 z-40 glass-panel p-6 w-96 max-h-[600px] overflow-y-auto"
+                >
+                  {messages.map((message, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`chat-bubble ${message.isAi ? "chat-bubble-ai" : "chat-bubble-user"}`}
+                    >
+                      {message.text}
+                    </motion.div>
+                  ))}
+
+                  <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
+                    <input
+                      type="text"
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      placeholder="Type your message..."
+                      className="flex-1 px-4 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
+                    />
+                    <button
+                      type="submit"
+                      className="px-6 py-2 bg-primary text-white rounded-xl hover:opacity-90 transition-opacity"
+                    >
+                      <MessageSquare className="h-5 w-5" />
+                    </button>
+                  </form>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         </motion.div>
-
-        <div className="text-center text-sm text-muted-foreground">
-          <p>Powered by memes and the spirit of Silicon Valley</p>
-        </div>
       </div>
     </div>
   );
