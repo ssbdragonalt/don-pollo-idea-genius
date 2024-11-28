@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Sparkles, Mic, MicOff } from "lucide-react";
-import Lottie from "react-lottie-player";
+import { motion } from "framer-motion";
+import { Sparkles, Mic, MicOff } from "lucide-react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import chickenAnimation from "../assets/chicken-animation.json";
 import { toast } from "sonner";
+import ChickenAvatar from "../components/ChickenAvatar";
+import ChatInterface from "../components/ChatInterface";
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
@@ -109,114 +109,38 @@ const Index = () => {
             Your AI-powered startup advisor with a sense of humor
           </p>
 
-          <div className="relative">
-            {/* 3D Chicken with Speech Bubble */}
-            <div className="fixed bottom-20 right-20 z-50">
-              <motion.div
-                animate={{
-                  y: [0, -10, 0],
-                  rotate: isThinking ? [0, 5, -5, 0] : 0,
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="relative"
-              >
-                <div className="w-40 h-40">
-                  <Lottie
-                    loop
-                    animationData={chickenAnimation}
-                    play={true}
-                    style={{ width: "100%", height: "100%" }}
-                  />
-                </div>
-                
-                <AnimatePresence>
-                  {currentSpeechBubble && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.8, y: 20 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.8, y: 20 }}
-                      className="absolute -top-32 right-0 glass-panel p-4 rounded-2xl max-w-[300px] text-left"
-                    >
-                      <div className="relative">
-                        {currentSpeechBubble}
-                        <div className="absolute -bottom-8 right-8 w-0 h-0 border-l-[10px] border-l-transparent border-t-[20px] border-white/20 border-r-[10px] border-r-transparent" />
-                      </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </motion.div>
+          <ChickenAvatar 
+            isThinking={isThinking}
+            currentMessage={currentSpeechBubble}
+          />
 
-              <button
-                onClick={() => setIsListening(!isListening)}
-                className={`mt-4 inline-flex items-center px-6 py-3 ${
-                  isListening ? "bg-destructive" : "bg-primary"
-                } text-white rounded-full font-medium hover:opacity-90 transition-opacity`}
-              >
-                {isListening ? (
-                  <>
-                    <MicOff className="mr-2 h-5 w-5" />
-                    Stop Listening
-                  </>
-                ) : (
-                  <>
-                    <Mic className="mr-2 h-5 w-5" />
-                    Start Talking
-                  </>
-                )}
-              </button>
-            </div>
+          <button
+            onClick={() => setIsListening(!isListening)}
+            className={`mt-4 inline-flex items-center px-6 py-3 ${
+              isListening ? "bg-destructive" : "bg-primary"
+            } text-white rounded-full font-medium hover:opacity-90 transition-opacity`}
+          >
+            {isListening ? (
+              <>
+                <MicOff className="mr-2 h-5 w-5" />
+                Stop Listening
+              </>
+            ) : (
+              <>
+                <Mic className="mr-2 h-5 w-5" />
+                Start Talking
+              </>
+            )}
+          </button>
 
-            {/* Toggle Chat Interface Button */}
-            <button
-              onClick={() => setShowChatbox(!showChatbox)}
-              className="fixed bottom-4 left-4 z-50 bg-primary text-white p-4 rounded-full hover:opacity-90 transition-opacity"
-            >
-              <MessageSquare />
-            </button>
-
-            {/* Original Chat Interface */}
-            <AnimatePresence>
-              {showChatbox && (
-                <motion.div
-                  initial={{ opacity: 0, x: -300 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -300 }}
-                  className="fixed left-4 bottom-20 z-40 glass-panel p-6 w-96 max-h-[600px] overflow-y-auto"
-                >
-                  {messages.map((message, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`chat-bubble ${message.isAi ? "chat-bubble-ai" : "chat-bubble-user"}`}
-                    >
-                      {message.text}
-                    </motion.div>
-                  ))}
-
-                  <form onSubmit={handleSubmit} className="mt-4 flex gap-2">
-                    <input
-                      type="text"
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      placeholder="Type your message..."
-                      className="flex-1 px-4 py-2 rounded-xl border border-border bg-background focus:outline-none focus:ring-2 focus:ring-primary"
-                    />
-                    <button
-                      type="submit"
-                      className="px-6 py-2 bg-primary text-white rounded-xl hover:opacity-90 transition-opacity"
-                    >
-                      <MessageSquare className="h-5 w-5" />
-                    </button>
-                  </form>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
+          <ChatInterface
+            showChatbox={showChatbox}
+            setShowChatbox={setShowChatbox}
+            messages={messages}
+            input={input}
+            setInput={setInput}
+            handleSubmit={handleSubmit}
+          />
         </motion.div>
       </div>
     </div>
