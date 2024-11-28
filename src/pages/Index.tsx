@@ -1,44 +1,97 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { MessageSquare, Sparkles, TrendingUp } from "lucide-react";
+import { MessageSquare, Sparkles, Mic, MicOff } from "lucide-react";
+import Lottie from "react-lottie-player";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import chickenAnimation from "../assets/chicken-animation.json";
+import { toast } from "sonner";
+
+const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 const Index = () => {
   const [messages, setMessages] = useState<Array<{ text: string; isAi: boolean }>>([
     { text: "Hey there! I'm Don Pollo, your meme-worthy startup advisor. Ready to disrupt some markets? 🐔", isAi: true },
   ]);
   const [input, setInput] = useState("");
+  const [isListening, setIsListening] = useState(false);
+  const [isThinking, setIsThinking] = useState(false);
 
-  const generateStartupIdea = () => {
-    const trends = ["AI", "Web3", "Sustainability", "Mental Health"];
-    const problems = ["productivity", "social connection", "education", "entertainment"];
-    const solutions = ["marketplace", "platform", "assistant", "community"];
+  // Speech recognition setup
+  useEffect(() => {
+    if (!("webkitSpeechRecognition" in window)) {
+      toast.error("Speech recognition is not supported in your browser");
+      return;
+    }
 
-    const trend = trends[Math.floor(Math.random() * trends.length)];
-    const problem = problems[Math.floor(Math.random() * problems.length)];
-    const solution = solutions[Math.floor(Math.random() * solutions.length)];
+    const recognition = new (window as any).webkitSpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
 
-    const idea = `Here's your next billion-dollar idea: A ${trend}-powered ${solution} for ${problem}. Think 'Uber meets Tesla' but for ${problem}!`;
-    
-    setMessages([...messages, { text: idea, isAi: true }]);
+    recognition.onresult = (event: any) => {
+      const transcript = Array.from(event.results)
+        .map((result: any) => result[0])
+        .map((result) => result.transcript)
+        .join("");
+      setInput(transcript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error(event.error);
+      setIsListening(false);
+      toast.error("Error with speech recognition");
+    };
+
+    return () => {
+      recognition.stop();
+    };
+  }, []);
+
+  const toggleListening = () => {
+    const recognition = new (window as any).webkitSpeechRecognition();
+    if (isListening) {
+      recognition.stop();
+    } else {
+      recognition.start();
+    }
+    setIsListening(!isListening);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const speak = async (text: string) => {
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 1;
+    utterance.pitch = 1;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const generateResponse = async (userInput: string) => {
+    try {
+      setIsThinking(true);
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const prompt = `You are Don Pollo, a quirky and meme-savvy startup advisor chicken. 
+        Respond to this user input in a fun, engaging way while providing actually useful startup advice: ${userInput}
+        Keep your response under 100 words and include at least one emoji.`;
+      
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      setMessages(prev => [...prev, { text, isAi: true }]);
+      speak(text);
+    } catch (error) {
+      toast.error("Error generating response");
+      console.error(error);
+    } finally {
+      setIsThinking(false);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    setMessages([...messages, { text: input, isAi: false }]);
+    setMessages(prev => [...prev, { text: input, isAi: false }]);
     setInput("");
-
-    // Simulate AI response
-    setTimeout(() => {
-      const responses = [
-        "That's literally genius! Have you considered adding blockchain to it?",
-        "Wow, that's like Airbnb meets SpaceX, but better!",
-        "Your TAM is literally infinite. VCs will love this!",
-      ];
-      const response = responses[Math.floor(Math.random() * responses.length)];
-      setMessages(prev => [...prev, { text: response, isAi: true }]);
-    }, 1000);
+    await generateResponse(input);
   };
 
   return (
@@ -58,12 +111,31 @@ const Index = () => {
           <p className="text-lg text-muted-foreground mb-8">
             Your AI-powered startup advisor with a sense of humor
           </p>
+          
+          <div className="relative w-64 h-64 mx-auto mb-8">
+            <Lottie
+              loop
+              animationData={chickenAnimation}
+              play={isThinking || isListening}
+              style={{ width: "100%", height: "100%" }}
+            />
+          </div>
+
           <button
-            onClick={generateStartupIdea}
-            className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-full font-medium hover:opacity-90 transition-opacity animate-float"
+            onClick={toggleListening}
+            className="inline-flex items-center px-6 py-3 bg-primary text-white rounded-full font-medium hover:opacity-90 transition-opacity mb-8"
           >
-            <Sparkles className="mr-2 h-5 w-5" />
-            Generate Startup Idea
+            {isListening ? (
+              <>
+                <MicOff className="mr-2 h-5 w-5" />
+                Stop Listening
+              </>
+            ) : (
+              <>
+                <Mic className="mr-2 h-5 w-5" />
+                Start Talking
+              </>
+            )}
           </button>
         </motion.div>
 
