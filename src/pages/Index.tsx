@@ -109,7 +109,7 @@ const Index = () => {
             Your AI-powered startup advisor with a sense of humor
           </p>
 
-          <div className="relative min-h-[600px] flex flex-col items-center justify-center">
+          <div className="relative min-h-[700px] flex flex-col items-center justify-center">
             <ChickenAvatar 
               isThinking={isThinking}
               currentMessage={currentSpeechBubble}

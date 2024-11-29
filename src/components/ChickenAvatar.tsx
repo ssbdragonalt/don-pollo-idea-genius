@@ -7,7 +7,7 @@ interface ChickenAvatarProps {
 
 const ChickenAvatar = ({ isThinking, currentMessage }: ChickenAvatarProps) => {
   return (
-    <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-50">
+    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
       <motion.div
         animate={{
           y: [0, -10, 0],
