@@ -109,17 +109,19 @@ const Index = () => {
             Your AI-powered startup advisor with a sense of humor
           </p>
 
-          <div className="flex flex-col items-center justify-center gap-8">
+          <div className="relative min-h-[500px] flex flex-col items-center justify-center gap-8">
             <ChickenAvatar 
               isThinking={isThinking}
               currentMessage={currentSpeechBubble}
             />
 
-            <button
+            <motion.button
               onClick={() => setIsListening(!isListening)}
-              className={`mt-4 inline-flex items-center px-6 py-3 ${
+              className={`mt-32 inline-flex items-center px-6 py-3 ${
                 isListening ? "bg-destructive" : "bg-primary"
-              } text-white rounded-full font-medium hover:opacity-90 transition-opacity`}
+              } text-white rounded-full font-medium hover:opacity-90 transition-opacity shadow-lg`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
               {isListening ? (
                 <>
@@ -132,7 +134,7 @@ const Index = () => {
                   Start Talking
                 </>
               )}
-            </button>
+            </motion.button>
           </div>
 
           <ChatInterface
