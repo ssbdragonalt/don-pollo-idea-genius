@@ -109,7 +109,7 @@ const Index = () => {
             Your AI-powered startup advisor with a sense of humor
           </p>
 
-          <div className="relative min-h-[500px] flex flex-col items-center justify-center gap-8">
+          <div className="relative min-h-[600px] flex flex-col items-center justify-center">
             <ChickenAvatar 
               isThinking={isThinking}
               currentMessage={currentSpeechBubble}
@@ -117,7 +117,7 @@ const Index = () => {
 
             <motion.button
               onClick={() => setIsListening(!isListening)}
-              className={`mt-32 inline-flex items-center px-6 py-3 ${
+              className={`fixed bottom-20 left-1/2 transform -translate-x-1/2 inline-flex items-center px-8 py-4 ${
                 isListening ? "bg-destructive" : "bg-primary"
               } text-white rounded-full font-medium hover:opacity-90 transition-opacity shadow-lg`}
               whileHover={{ scale: 1.05 }}

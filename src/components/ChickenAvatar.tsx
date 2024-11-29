@@ -7,31 +7,56 @@ interface ChickenAvatarProps {
 
 const ChickenAvatar = ({ isThinking, currentMessage }: ChickenAvatarProps) => {
   return (
-    <div className="absolute top-32 left-1/2 transform -translate-x-1/2 z-50">
+    <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-50">
       <motion.div
         animate={{
           y: [0, -10, 0],
+          rotateY: [0, 360],
           rotate: isThinking ? [0, 5, -5, 0] : 0,
         }}
         transition={{
-          duration: 2,
+          duration: 3,
           repeat: Infinity,
           ease: "easeInOut",
+          rotateY: {
+            duration: 2,
+            repeat: Infinity,
+            ease: "easeInOut",
+            repeatDelay: 5
+          }
         }}
         className="relative"
       >
         <motion.div 
-          className="w-48 h-48 bg-primary rounded-full flex items-center justify-center transform hover:scale-105 transition-transform shadow-lg"
-          whileHover={{ scale: 1.1 }}
+          className="w-48 h-48 bg-gradient-to-br from-primary to-primary/80 rounded-full flex items-center justify-center shadow-xl transform-gpu perspective-1000"
+          whileHover={{ 
+            scale: 1.1,
+            rotateY: 180,
+            transition: { duration: 0.5 }
+          }}
           whileTap={{ scale: 0.95 }}
+          style={{
+            transformStyle: "preserve-3d",
+          }}
         >
-          <motion.span 
-            className="text-7xl select-none"
-            animate={{ rotate: isThinking ? [0, 10, -10, 0] : 0 }}
-            transition={{ duration: 0.5, repeat: isThinking ? Infinity : 0 }}
+          <motion.div
+            className="text-8xl select-none"
+            animate={{ 
+              rotate: isThinking ? [0, 10, -10, 0] : 0,
+              scale: [1, 1.1, 1]
+            }}
+            transition={{ 
+              duration: 0.5, 
+              repeat: isThinking ? Infinity : 0,
+              scale: {
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut"
+              }
+            }}
           >
             🐔
-          </motion.span>
+          </motion.div>
         </motion.div>
         
         <AnimatePresence>
