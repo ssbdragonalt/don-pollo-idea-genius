@@ -17,6 +17,7 @@ const Index = () => {
   const [isThinking, setIsThinking] = useState(false);
   const [currentSpeechBubble, setCurrentSpeechBubble] = useState("");
   const [showChatbox, setShowChatbox] = useState(false);
+  const [transcript, setTranscript] = useState("");
 
   useEffect(() => {
     if (!("webkitSpeechRecognition" in window)) {
@@ -29,21 +30,26 @@ const Index = () => {
     recognition.interimResults = true;
 
     recognition.onresult = (event: any) => {
-      const transcript = Array.from(event.results)
+      const currentTranscript = Array.from(event.results)
         .map((result: any) => result[0])
         .map((result) => result.transcript)
         .join("");
-      setInput(transcript);
+      setTranscript(currentTranscript);
+      setInput(currentTranscript);
     };
 
     recognition.onend = () => {
       if (isListening) {
-        handleSubmit({ preventDefault: () => {} } as any);
+        recognition.stop();
         setIsListening(false);
+        if (transcript.trim()) {
+          handleSubmit({ preventDefault: () => {} } as any);
+        }
       }
     };
 
     if (isListening) {
+      setTranscript("");
       recognition.start();
     }
 
@@ -75,10 +81,11 @@ const Index = () => {
       setCurrentSpeechBubble(text);
       speak(text);
     } catch (error) {
-      toast.error("Error generating response");
+      toast.error("Oops! My chicken brain had a hiccup 🐔");
       console.error(error);
     } finally {
       setIsThinking(false);
+      setTranscript("");
     }
   };
 
@@ -86,9 +93,10 @@ const Index = () => {
     e.preventDefault();
     if (!input.trim()) return;
 
-    setMessages(prev => [...prev, { text: input, isAi: false }]);
+    const userMessage = input;
+    setMessages(prev => [...prev, { text: userMessage, isAi: false }]);
     setInput("");
-    await generateResponse(input);
+    await generateResponse(userMessage);
   };
 
   return (
@@ -117,11 +125,12 @@ const Index = () => {
 
             <motion.button
               onClick={() => setIsListening(!isListening)}
-              className={`fixed bottom-20 left-1/2 transform -translate-x-1/2 inline-flex items-center px-8 py-4 ${
+              className={`fixed bottom-20 transform -translate-x-1/2 inline-flex items-center px-8 py-4 ${
                 isListening ? "bg-destructive" : "bg-primary"
               } text-white rounded-full font-medium hover:opacity-90 transition-opacity shadow-lg`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              style={{ left: "50%" }}
             >
               {isListening ? (
                 <>
