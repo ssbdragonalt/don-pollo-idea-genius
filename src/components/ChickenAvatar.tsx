@@ -1,6 +1,4 @@
 import { motion, AnimatePresence } from "framer-motion";
-import Lottie from "react-lottie-player";
-import chickenAnimation from "../assets/chicken-animation.json";
 
 interface ChickenAvatarProps {
   isThinking: boolean;
@@ -9,7 +7,7 @@ interface ChickenAvatarProps {
 
 const ChickenAvatar = ({ isThinking, currentMessage }: ChickenAvatarProps) => {
   return (
-    <div className="fixed bottom-20 right-20 z-50">
+    <div className="fixed bottom-40 right-1/2 transform translate-x-1/2 z-50">
       <motion.div
         animate={{
           y: [0, -10, 0],
@@ -22,13 +20,8 @@ const ChickenAvatar = ({ isThinking, currentMessage }: ChickenAvatarProps) => {
         }}
         className="relative"
       >
-        <div className="w-40 h-40">
-          <Lottie
-            loop
-            animationData={chickenAnimation}
-            play={true}
-            style={{ width: "100%", height: "100%" }}
-          />
+        <div className="w-40 h-40 bg-primary rounded-full flex items-center justify-center transform hover:scale-105 transition-transform">
+          <span className="text-6xl select-none">🐔</span>
         </div>
         
         <AnimatePresence>

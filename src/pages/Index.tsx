@@ -109,29 +109,31 @@ const Index = () => {
             Your AI-powered startup advisor with a sense of humor
           </p>
 
-          <ChickenAvatar 
-            isThinking={isThinking}
-            currentMessage={currentSpeechBubble}
-          />
+          <div className="flex flex-col items-center justify-center gap-8">
+            <ChickenAvatar 
+              isThinking={isThinking}
+              currentMessage={currentSpeechBubble}
+            />
 
-          <button
-            onClick={() => setIsListening(!isListening)}
-            className={`mt-4 inline-flex items-center px-6 py-3 ${
-              isListening ? "bg-destructive" : "bg-primary"
-            } text-white rounded-full font-medium hover:opacity-90 transition-opacity`}
-          >
-            {isListening ? (
-              <>
-                <MicOff className="mr-2 h-5 w-5" />
-                Stop Listening
-              </>
-            ) : (
-              <>
-                <Mic className="mr-2 h-5 w-5" />
-                Start Talking
-              </>
-            )}
-          </button>
+            <button
+              onClick={() => setIsListening(!isListening)}
+              className={`mt-4 inline-flex items-center px-6 py-3 ${
+                isListening ? "bg-destructive" : "bg-primary"
+              } text-white rounded-full font-medium hover:opacity-90 transition-opacity`}
+            >
+              {isListening ? (
+                <>
+                  <MicOff className="mr-2 h-5 w-5" />
+                  Stop Listening
+                </>
+              ) : (
+                <>
+                  <Mic className="mr-2 h-5 w-5" />
+                  Start Talking
+                </>
+              )}
+            </button>
+          </div>
 
           <ChatInterface
             showChatbox={showChatbox}
