@@ -3,12 +3,15 @@ import { motion } from "framer-motion";
 import { Sparkles, Mic, MicOff } from "lucide-react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { toast } from "sonner";
+import { useAuth } from "@clerk/clerk-react";
+import { supabase } from "@/integrations/supabase/client";
 import ChickenAvatar from "../components/ChickenAvatar";
 import ChatInterface from "../components/ChatInterface";
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
 const Index = () => {
+  const { userId } = useAuth();
   const [messages, setMessages] = useState<Array<{ text: string; isAi: boolean }>>([
     { text: "Hey there! I'm Don Pollo, your meme-worthy startup advisor. Ready to disrupt some markets? 🐔", isAi: true },
   ]);
@@ -18,6 +21,7 @@ const Index = () => {
   const [currentSpeechBubble, setCurrentSpeechBubble] = useState("");
   const [showChatbox, setShowChatbox] = useState(false);
   const [transcript, setTranscript] = useState("");
+  const [startupName, setStartupName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!("webkitSpeechRecognition" in window)) {
@@ -65,6 +69,58 @@ const Index = () => {
     window.speechSynthesis.speak(utterance);
   };
 
+  const updateConversationSummary = async (messages: Array<{ text: string; isAi: boolean }>) => {
+    if (!userId) return;
+
+    try {
+      // Generate a summary of the conversation using Gemini
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      const conversation = messages.map(m => `${m.isAi ? "Don Pollo" : "User"}: ${m.text}`).join("\n");
+      const summaryPrompt = `Analyze this conversation and provide a brief summary of the startup idea or business context discussed. If a startup name is mentioned, extract it. Format: {summary: "brief summary", startupName: "name if found, or null"}
+      
+      Conversation:
+      ${conversation}`;
+      
+      const result = await model.generateContent(summaryPrompt);
+      const response = await result.response;
+      const summaryText = response.text();
+      
+      try {
+        const parsedSummary = JSON.parse(summaryText);
+        
+        if (parsedSummary.startupName) {
+          setStartupName(parsedSummary.startupName);
+        }
+
+        const { error } = await supabase
+          .from('conversation_summaries')
+          .upsert({
+            user_id: userId,
+            startup_name: parsedSummary.startupName,
+            summary: parsedSummary.summary,
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) throw error;
+      } catch (parseError) {
+        console.error('Failed to parse summary:', parseError);
+        // If parsing fails, store the raw summary
+        const { error } = await supabase
+          .from('conversation_summaries')
+          .upsert({
+            user_id: userId,
+            summary: summaryText,
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) throw error;
+      }
+    } catch (error) {
+      console.error('Error updating conversation summary:', error);
+      toast.error("Failed to save conversation summary");
+    }
+  };
+
   const generateResponse = async (userInput: string) => {
     try {
       setIsThinking(true);
@@ -77,9 +133,13 @@ const Index = () => {
       const response = await result.response;
       const text = response.text();
       
-      setMessages(prev => [...prev, { text, isAi: true }]);
+      const updatedMessages = [...messages, { text, isAi: true }];
+      setMessages(updatedMessages);
       setCurrentSpeechBubble(text);
       speak(text);
+
+      // Update the conversation summary after each AI response
+      await updateConversationSummary(updatedMessages);
     } catch (error) {
       toast.error("Oops! My chicken brain had a hiccup 🐔");
       console.error(error);
@@ -94,7 +154,8 @@ const Index = () => {
     if (!input.trim()) return;
 
     const userMessage = input;
-    setMessages(prev => [...prev, { text: userMessage, isAi: false }]);
+    const updatedMessages = [...messages, { text: userMessage, isAi: false }];
+    setMessages(updatedMessages);
     setInput("");
     await generateResponse(userMessage);
   };
