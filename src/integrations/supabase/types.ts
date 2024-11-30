@@ -36,6 +36,45 @@ export type Database = {
         }
         Relationships: []
       }
+      startup_plans: {
+        Row: {
+          competitors: string[] | null
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean | null
+          name: string
+          target_market: string | null
+          unique_value: string | null
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          competitors?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name: string
+          target_market?: string | null
+          unique_value?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          competitors?: string[] | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean | null
+          name?: string
+          target_market?: string | null
+          unique_value?: string | null
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

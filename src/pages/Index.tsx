@@ -9,6 +9,7 @@ import ChickenAvatar from "../components/ChickenAvatar";
 import ChatInterface from "../components/ChatInterface";
 import VoiceControls from "../components/VoiceControls";
 import AuthWrapper from "../components/AuthWrapper";
+import StartupPlanEditor from "../components/StartupPlanEditor";
 
 const genAI = new GoogleGenerativeAI(import.meta.env.VITE_GEMINI_API_KEY);
 
@@ -23,7 +24,6 @@ const Index = () => {
   const [currentSpeechBubble, setCurrentSpeechBubble] = useState("");
   const [showChatbox, setShowChatbox] = useState(false);
   const [transcript, setTranscript] = useState("");
-  const [startupName, setStartupName] = useState<string | null>(null);
 
   useEffect(() => {
     if (!("webkitSpeechRecognition" in window)) {
@@ -48,9 +48,6 @@ const Index = () => {
       if (isListening) {
         recognition.stop();
         setIsListening(false);
-        if (transcript.trim()) {
-          handleSubmit({ preventDefault: () => {} } as any);
-        }
       }
     };
 
@@ -89,10 +86,6 @@ const Index = () => {
       try {
         const parsedSummary = JSON.parse(summaryText);
         
-        if (parsedSummary.startupName) {
-          setStartupName(parsedSummary.startupName);
-        }
-
         const { error } = await supabase
           .from('conversation_summaries')
           .upsert({
@@ -105,15 +98,6 @@ const Index = () => {
         if (error) throw error;
       } catch (parseError) {
         console.error('Failed to parse summary:', parseError);
-        const { error } = await supabase
-          .from('conversation_summaries')
-          .upsert({
-            user_id: userId,
-            summary: summaryText,
-            updated_at: new Date().toISOString()
-          });
-
-        if (error) throw error;
       }
     } catch (error) {
       console.error('Error updating conversation summary:', error);
@@ -148,15 +132,18 @@ const Index = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  const handleSubmit = async (userInput: string) => {
+    if (!userInput.trim()) return;
 
-    const userMessage = input;
-    const updatedMessages = [...messages, { text: userMessage, isAi: false }];
+    const updatedMessages = [...messages, { text: userInput, isAi: false }];
     setMessages(updatedMessages);
     setInput("");
-    await generateResponse(userMessage);
+    await generateResponse(userInput);
+  };
+
+  const handleChatSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    handleSubmit(input);
   };
 
   return (
@@ -184,10 +171,13 @@ const Index = () => {
                 currentMessage={currentSpeechBubble}
               />
 
+              <StartupPlanEditor />
+
               <VoiceControls
                 isListening={isListening}
                 setIsListening={setIsListening}
                 onStopListening={handleSubmit}
+                transcript={transcript}
               />
             </div>
 
@@ -197,7 +187,7 @@ const Index = () => {
               messages={messages}
               input={input}
               setInput={setInput}
-              handleSubmit={handleSubmit}
+              handleSubmit={handleChatSubmit}
             />
           </motion.div>
         </div>

@@ -4,13 +4,16 @@ import { motion } from "framer-motion";
 interface VoiceControlsProps {
   isListening: boolean;
   setIsListening: (value: boolean) => void;
-  onStopListening: () => void;
+  onStopListening: (transcript: string) => void;
+  transcript: string;
 }
 
-const VoiceControls = ({ isListening, setIsListening, onStopListening }: VoiceControlsProps) => {
+const VoiceControls = ({ isListening, setIsListening, onStopListening, transcript }: VoiceControlsProps) => {
   const handleStopListening = () => {
     setIsListening(false);
-    onStopListening();
+    if (transcript.trim()) {
+      onStopListening(transcript);
+    }
   };
 
   return (
