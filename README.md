@@ -1,5 +1,22 @@
 # Welcome to your Lovable project
 
+## Environment Variables
+
+Create a `.env` file in the root of your project with the following variables:
+
+```env
+# Gemini API Key
+VITE_GEMINI_API_KEY=your_gemini_api_key
+
+# Clerk (Authentication)
+VITE_CLERK_PUBLISHABLE_KEY=your_clerk_publishable_key
+VITE_CLERK_SECRET_KEY=your_clerk_secret_key
+
+# Supabase (Database)
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/ec2a40a4-c3bd-47fb-b7db-a2b5360a0b0d
@@ -67,3 +84,4 @@ Simply open [Lovable](https://lovable.dev/projects/ec2a40a4-c3bd-47fb-b7db-a2b53
 ## I want to use a custom domain - is that possible?
 
 We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+```
