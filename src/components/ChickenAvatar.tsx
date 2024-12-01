@@ -8,7 +8,7 @@ interface ChickenAvatarProps {
 const ChickenAvatar = ({ isThinking, currentMessage }: ChickenAvatarProps) => {
   // Function to remove asterisks from text
   const cleanMessage = (message: string) => {
-    return message.replace(/\*/g, '');
+    return message.replace(/\*/g, '').replace(/---PLAN_UPDATES---[\s\S]*$/, '').trim();
   };
 
   return (
@@ -66,13 +66,13 @@ const ChickenAvatar = ({ isThinking, currentMessage }: ChickenAvatarProps) => {
           </motion.div>
         </motion.div>
         
-        <AnimatePresence>
+        <AnimatePresence mode="wait">
           {currentMessage && (
             <motion.div
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="glass-panel p-4 rounded-2xl max-w-[600px] text-left mt-4"
+              className="glass-panel p-4 rounded-2xl max-w-[400px] text-left mt-4"
             >
               <div className="relative">
                 {cleanMessage(currentMessage)}

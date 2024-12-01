@@ -1,5 +1,6 @@
 import { Mic, MicOff } from "lucide-react";
 import { motion } from "framer-motion";
+import { useEffect } from "react";
 
 interface VoiceControlsProps {
   isListening: boolean;
@@ -9,6 +10,42 @@ interface VoiceControlsProps {
 }
 
 const VoiceControls = ({ isListening, setIsListening, onStopListening, transcript }: VoiceControlsProps) => {
+  useEffect(() => {
+    let recognition: SpeechRecognition | null = null;
+
+    if (isListening) {
+      recognition = new (window.SpeechRecognition || window.webkitSpeechRecognition)();
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0])
+          .map(result => result.transcript)
+          .join('');
+        
+        console.log('Transcript:', transcript);
+        if (event.results[0].isFinal) {
+          onStopListening(transcript);
+          setIsListening(false);
+        }
+      };
+
+      recognition.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+
+      recognition.start();
+    }
+
+    return () => {
+      if (recognition) {
+        recognition.stop();
+      }
+    };
+  }, [isListening, onStopListening, setIsListening]);
+
   const handleStopListening = () => {
     setIsListening(false);
     if (transcript.trim()) {

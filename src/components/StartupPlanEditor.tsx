@@ -35,7 +35,8 @@ const StartupPlanEditor = ({ onPlanUpdate }: StartupPlanEditorProps) => {
 
   const formatUserId = (clerkId: string | null | undefined) => {
     if (!clerkId) return null;
-    return clerkId.replace('user_', '');
+    // Keep the full Clerk ID as it's already in UUID format
+    return clerkId;
   };
 
   const savePlan = async () => {
