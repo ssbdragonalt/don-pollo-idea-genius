@@ -36,9 +36,14 @@ const StartupPlanEditor = () => {
         return;
       }
 
+      // Convert Clerk user ID to UUID format
+      const formattedUserId = userId.replace('user_', '');
+      const uuid = crypto.randomUUID();
+
       const { error } = await supabase.from("startup_plans").upsert({
         ...plan,
-        user_id: userId,
+        id: uuid,
+        user_id: formattedUserId,
         updated_at: new Date().toISOString(),
       });
 

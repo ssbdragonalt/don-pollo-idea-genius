@@ -18,7 +18,7 @@ const VoiceControls = ({ isListening, setIsListening, onStopListening, transcrip
 
   return (
     <motion.div
-      className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50"
+      className="fixed bottom-8 left-1/3 transform -translate-x-1/2 z-50"
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}

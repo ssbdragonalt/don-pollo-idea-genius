@@ -7,7 +7,7 @@ interface ChickenAvatarProps {
 
 const ChickenAvatar = ({ isThinking, currentMessage }: ChickenAvatarProps) => {
   return (
-    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-50">
+    <div className="absolute top-4 left-1/3 transform -translate-x-1/2 z-50">
       <div className="flex items-start gap-4">
         <motion.div
           animate={{
@@ -67,7 +67,7 @@ const ChickenAvatar = ({ isThinking, currentMessage }: ChickenAvatarProps) => {
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}
-              className="glass-panel p-4 rounded-2xl max-w-[300px] text-left mt-4"
+              className="glass-panel p-4 rounded-2xl max-w-[400px] text-left mt-4"
             >
               <div className="relative">
                 {currentMessage}

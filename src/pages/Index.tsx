@@ -1,6 +1,5 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Sparkles } from "lucide-react";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/clerk-react";
@@ -24,6 +23,79 @@ const Index = () => {
   const [currentSpeechBubble, setCurrentSpeechBubble] = useState("");
   const [showChatbox, setShowChatbox] = useState(false);
   const [transcript, setTranscript] = useState("");
+
+  const generateResponse = async (userInput: string) => {
+    try {
+      setIsThinking(true);
+      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+      
+      // Get the current startup plan state to provide context to the AI
+      const { data: startupPlan } = await supabase
+        .from('startup_plans')
+        .select('*')
+        .eq('user_id', userId?.replace('user_', ''))
+        .single();
+
+      const prompt = `You are Don Pollo, a quirky and meme-savvy startup advisor chicken. 
+        Here's the current startup plan context (if available):
+        ${JSON.stringify(startupPlan || {})}
+        
+        Based on this context and the user's input, provide helpful startup advice and suggestions for improving the plan.
+        If you notice any gaps in the plan, point them out.
+        Keep your response under 150 words and include at least one emoji.
+        
+        User input: ${userInput}`;
+      
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      const updatedMessages = [...messages, { text, isAi: true }];
+      setMessages(updatedMessages);
+      setCurrentSpeechBubble(text);
+
+      // Try to extract any suggestions for the startup plan
+      const planUpdatePrompt = `Based on the conversation, suggest updates to the startup plan in valid JSON format matching this structure:
+        {
+          "name": "string",
+          "description": "string",
+          "target_market": "string",
+          "competitors": ["string"],
+          "unique_value": "string"
+        }
+        Only include fields that should be updated based on the conversation.
+        Current plan: ${JSON.stringify(startupPlan || {})}
+        Conversation: ${userInput}
+        AI response: ${text}`;
+
+      const planResult = await model.generateContent(planUpdatePrompt);
+      const planResponse = await planResult.response;
+      const planUpdates = JSON.parse(planResponse.text());
+
+      // Update the startup plan if we got valid suggestions
+      if (planUpdates && Object.keys(planUpdates).length > 0) {
+        const { error } = await supabase
+          .from('startup_plans')
+          .upsert({
+            ...startupPlan,
+            ...planUpdates,
+            user_id: userId?.replace('user_', ''),
+            updated_at: new Date().toISOString()
+          });
+
+        if (error) {
+          console.error('Error updating startup plan:', error);
+        }
+      }
+
+    } catch (error) {
+      toast.error("Oops! My chicken brain had a hiccup 🐔");
+      console.error(error);
+    } finally {
+      setIsThinking(false);
+      setTranscript("");
+    }
+  };
 
   useEffect(() => {
     if (!("webkitSpeechRecognition" in window)) {
@@ -66,70 +138,6 @@ const Index = () => {
     utterance.rate = 1;
     utterance.pitch = 1;
     window.speechSynthesis.speak(utterance);
-  };
-
-  const updateConversationSummary = async (messages: Array<{ text: string; isAi: boolean }>) => {
-    if (!userId) return;
-
-    try {
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-      const conversation = messages.map(m => `${m.isAi ? "Don Pollo" : "User"}: ${m.text}`).join("\n");
-      const summaryPrompt = `Analyze this conversation and provide a brief summary of the startup idea or business context discussed. If a startup name is mentioned, extract it. Format: {summary: "brief summary", startupName: "name if found, or null"}
-      
-      Conversation:
-      ${conversation}`;
-      
-      const result = await model.generateContent(summaryPrompt);
-      const response = await result.response;
-      const summaryText = response.text();
-      
-      try {
-        const parsedSummary = JSON.parse(summaryText);
-        
-        const { error } = await supabase
-          .from('conversation_summaries')
-          .upsert({
-            user_id: userId,
-            startup_name: parsedSummary.startupName,
-            summary: parsedSummary.summary,
-            updated_at: new Date().toISOString()
-          });
-
-        if (error) throw error;
-      } catch (parseError) {
-        console.error('Failed to parse summary:', parseError);
-      }
-    } catch (error) {
-      console.error('Error updating conversation summary:', error);
-      toast.error("Failed to save conversation summary");
-    }
-  };
-
-  const generateResponse = async (userInput: string) => {
-    try {
-      setIsThinking(true);
-      const model = genAI.getGenerativeModel({ model: "gemini-pro" });
-      const prompt = `You are Don Pollo, a quirky and meme-savvy startup advisor chicken. 
-        Respond to this user input in a fun, engaging way while providing actually useful startup advice: ${userInput}
-        Keep your response under 100 words and include at least one emoji.`;
-      
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
-      
-      const updatedMessages = [...messages, { text, isAi: true }];
-      setMessages(updatedMessages);
-      setCurrentSpeechBubble(text);
-      speak(text);
-
-      await updateConversationSummary(updatedMessages);
-    } catch (error) {
-      toast.error("Oops! My chicken brain had a hiccup 🐔");
-      console.error(error);
-    } finally {
-      setIsThinking(false);
-      setTranscript("");
-    }
   };
 
   const handleSubmit = async (userInput: string) => {
