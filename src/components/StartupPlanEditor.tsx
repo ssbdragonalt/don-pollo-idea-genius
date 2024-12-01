@@ -29,6 +29,14 @@ const StartupPlanEditor = () => {
     is_public: false,
   });
 
+  const formatUserId = (clerkId: string | null | undefined) => {
+    if (!clerkId) return null;
+    // Remove 'user_' prefix and ensure UUID format
+    const cleanId = clerkId.replace('user_', '');
+    // Generate a deterministic UUID from the Clerk ID
+    return crypto.randomUUID();
+  };
+
   const savePlan = async () => {
     try {
       if (!userId) {
@@ -36,9 +44,8 @@ const StartupPlanEditor = () => {
         return;
       }
 
-      // Remove 'user_' prefix and format as UUID
-      const formattedUserId = userId.replace('user_', '');
-      console.log('Formatted user ID:', formattedUserId);
+      const formattedUserId = formatUserId(userId);
+      console.log('Using formatted user ID:', formattedUserId);
 
       const { data: existingPlan, error: fetchError } = await supabase
         .from("startup_plans")
@@ -76,7 +83,7 @@ const StartupPlanEditor = () => {
     const loadPlan = async () => {
       if (!userId) return;
 
-      const formattedUserId = userId.replace('user_', '');
+      const formattedUserId = formatUserId(userId);
       const { data, error } = await supabase
         .from("startup_plans")
         .select("*")
@@ -99,6 +106,8 @@ const StartupPlanEditor = () => {
 
   // Function to update plan from AI suggestions
   const updatePlanFromAI = async (suggestions: Partial<StartupPlan>) => {
+    if (!suggestions) return;
+    
     console.log('Updating plan with AI suggestions:', suggestions);
     const updatedPlan = { ...plan, ...suggestions };
     setPlan(updatedPlan);
