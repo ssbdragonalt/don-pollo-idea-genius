@@ -30,67 +30,84 @@ const Index = () => {
       const model = genAI.getGenerativeModel({ model: "gemini-pro" });
       
       // Get the current startup plan state to provide context to the AI
-      const { data: startupPlan } = await supabase
+      const formattedUserId = userId?.replace('user_', '');
+      console.log('Getting startup plan for user:', formattedUserId);
+      
+      const { data: startupPlan, error: planError } = await supabase
         .from('startup_plans')
         .select('*')
-        .eq('user_id', userId?.replace('user_', ''))
+        .eq('user_id', formattedUserId)
         .single();
 
+      if (planError) {
+        console.error('Error fetching startup plan:', planError);
+      }
+
+      console.log('Current startup plan:', startupPlan);
+
       const prompt = `You are Don Pollo, a quirky and meme-savvy startup advisor chicken. 
-        Here's the current startup plan context (if available):
+        Here's the current startup plan context:
         ${JSON.stringify(startupPlan || {})}
         
         Based on this context and the user's input, provide helpful startup advice and suggestions for improving the plan.
         If you notice any gaps in the plan, point them out.
         Keep your response under 150 words and include at least one emoji.
         
+        IMPORTANT: If you have specific suggestions for updating the startup plan, include them in a JSON block at the end of your message like this:
+        ---PLAN_UPDATES---
+        {
+          "name": "suggested name",
+          "description": "suggested description",
+          // ... other fields to update
+        }
+        
         User input: ${userInput}`;
       
       const result = await model.generateContent(prompt);
       const response = await result.response;
-      const text = response.text();
+      let text = response.text();
+      
+      // Extract plan updates if they exist
+      let planUpdates = null;
+      const planUpdateMatch = text.match(/---PLAN_UPDATES---([\s\S]*)/);
+      if (planUpdateMatch) {
+        try {
+          const jsonStr = planUpdateMatch[1].trim();
+          planUpdates = JSON.parse(jsonStr);
+          // Remove the plan updates section from the displayed message
+          text = text.replace(/---PLAN_UPDATES---[\s\S]*/, '').trim();
+          console.log('Extracted plan updates:', planUpdates);
+          
+          // Update the startup plan with AI suggestions
+          if (planUpdates && Object.keys(planUpdates).length > 0) {
+            const { error: updateError } = await supabase
+              .from('startup_plans')
+              .upsert({
+                ...startupPlan,
+                ...planUpdates,
+                user_id: formattedUserId,
+                updated_at: new Date().toISOString()
+              });
+
+            if (updateError) {
+              console.error('Error updating startup plan:', updateError);
+            } else {
+              console.log('Successfully updated startup plan with AI suggestions');
+              toast.success("Updated startup plan with AI suggestions! 🐔");
+            }
+          }
+        } catch (error) {
+          console.error('Error parsing plan updates:', error);
+        }
+      }
       
       const updatedMessages = [...messages, { text, isAi: true }];
       setMessages(updatedMessages);
       setCurrentSpeechBubble(text);
 
-      // Try to extract any suggestions for the startup plan
-      const planUpdatePrompt = `Based on the conversation, suggest updates to the startup plan in valid JSON format matching this structure:
-        {
-          "name": "string",
-          "description": "string",
-          "target_market": "string",
-          "competitors": ["string"],
-          "unique_value": "string"
-        }
-        Only include fields that should be updated based on the conversation.
-        Current plan: ${JSON.stringify(startupPlan || {})}
-        Conversation: ${userInput}
-        AI response: ${text}`;
-
-      const planResult = await model.generateContent(planUpdatePrompt);
-      const planResponse = await planResult.response;
-      const planUpdates = JSON.parse(planResponse.text());
-
-      // Update the startup plan if we got valid suggestions
-      if (planUpdates && Object.keys(planUpdates).length > 0) {
-        const { error } = await supabase
-          .from('startup_plans')
-          .upsert({
-            ...startupPlan,
-            ...planUpdates,
-            user_id: userId?.replace('user_', ''),
-            updated_at: new Date().toISOString()
-          });
-
-        if (error) {
-          console.error('Error updating startup plan:', error);
-        }
-      }
-
     } catch (error) {
+      console.error('Error in generateResponse:', error);
       toast.error("Oops! My chicken brain had a hiccup 🐔");
-      console.error(error);
     } finally {
       setIsThinking(false);
       setTranscript("");

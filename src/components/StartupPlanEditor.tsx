@@ -36,23 +36,73 @@ const StartupPlanEditor = () => {
         return;
       }
 
-      // Convert Clerk user ID to UUID format
+      // Remove 'user_' prefix and format as UUID
       const formattedUserId = userId.replace('user_', '');
-      const uuid = crypto.randomUUID();
+      console.log('Formatted user ID:', formattedUserId);
+
+      const { data: existingPlan, error: fetchError } = await supabase
+        .from("startup_plans")
+        .select("id")
+        .eq("user_id", formattedUserId)
+        .single();
+
+      console.log('Existing plan:', existingPlan);
+      console.log('Fetch error:', fetchError);
+
+      const planId = existingPlan?.id || crypto.randomUUID();
+      console.log('Using plan ID:', planId);
 
       const { error } = await supabase.from("startup_plans").upsert({
-        ...plan,
-        id: uuid,
+        id: planId,
         user_id: formattedUserId,
+        ...plan,
         updated_at: new Date().toISOString(),
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error details:', error);
+        throw error;
+      }
+
       toast.success("Startup plan saved!");
     } catch (error) {
       console.error("Error saving plan:", error);
       toast.error("Failed to save startup plan");
     }
+  };
+
+  // Load existing plan on component mount
+  useEffect(() => {
+    const loadPlan = async () => {
+      if (!userId) return;
+
+      const formattedUserId = userId.replace('user_', '');
+      const { data, error } = await supabase
+        .from("startup_plans")
+        .select("*")
+        .eq("user_id", formattedUserId)
+        .single();
+
+      if (error) {
+        console.error("Error loading plan:", error);
+        return;
+      }
+
+      if (data) {
+        console.log('Loaded plan:', data);
+        setPlan(data);
+      }
+    };
+
+    loadPlan();
+  }, [userId]);
+
+  // Function to update plan from AI suggestions
+  const updatePlanFromAI = async (suggestions: Partial<StartupPlan>) => {
+    console.log('Updating plan with AI suggestions:', suggestions);
+    const updatedPlan = { ...plan, ...suggestions };
+    setPlan(updatedPlan);
+    await savePlan();
   };
 
   return (
