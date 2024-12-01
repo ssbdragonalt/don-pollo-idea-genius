@@ -149,7 +149,7 @@ const Index = () => {
   return (
     <AuthWrapper>
       <div className="min-h-screen bg-gradient-to-b from-background to-secondary/10 p-4 md:p-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -165,20 +165,24 @@ const Index = () => {
               Your AI-powered startup advisor with a sense of humor
             </p>
 
-            <div className="relative min-h-[700px] flex flex-col items-center justify-center">
-              <ChickenAvatar 
-                isThinking={isThinking}
-                currentMessage={currentSpeechBubble}
-              />
+            <div className="relative min-h-[700px] flex flex-row items-start justify-between gap-8">
+              <div className="w-1/2 relative">
+                <ChickenAvatar 
+                  isThinking={isThinking}
+                  currentMessage={currentSpeechBubble}
+                />
 
-              <StartupPlanEditor />
+                <VoiceControls
+                  isListening={isListening}
+                  setIsListening={setIsListening}
+                  onStopListening={handleSubmit}
+                  transcript={transcript}
+                />
+              </div>
 
-              <VoiceControls
-                isListening={isListening}
-                setIsListening={setIsListening}
-                onStopListening={handleSubmit}
-                transcript={transcript}
-              />
+              <div className="w-1/2">
+                <StartupPlanEditor />
+              </div>
             </div>
 
             <ChatInterface

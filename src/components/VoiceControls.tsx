@@ -17,27 +17,33 @@ const VoiceControls = ({ isListening, setIsListening, onStopListening, transcrip
   };
 
   return (
-    <motion.button
-      onClick={() => isListening ? handleStopListening() : setIsListening(true)}
-      className={`fixed bottom-20 transform -translate-x-1/2 inline-flex items-center px-8 py-4 ${
-        isListening ? "bg-destructive" : "bg-primary"
-      } text-white rounded-full font-medium hover:opacity-90 transition-opacity shadow-lg`}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      style={{ left: "50%" }}
+    <motion.div
+      className="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50"
+      initial={{ y: 20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.3 }}
     >
-      {isListening ? (
-        <>
-          <MicOff className="mr-2 h-5 w-5" />
-          Stop Listening
-        </>
-      ) : (
-        <>
-          <Mic className="mr-2 h-5 w-5" />
-          Start Talking
-        </>
-      )}
-    </motion.button>
+      <motion.button
+        onClick={() => isListening ? handleStopListening() : setIsListening(true)}
+        className={`glass-panel inline-flex items-center px-8 py-4 ${
+          isListening ? "bg-destructive text-white" : "bg-primary text-white"
+        } rounded-full font-medium hover:opacity-90 transition-all shadow-lg`}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.95 }}
+      >
+        {isListening ? (
+          <>
+            <MicOff className="mr-2 h-5 w-5" />
+            Stop Listening
+          </>
+        ) : (
+          <>
+            <Mic className="mr-2 h-5 w-5" />
+            Start Talking
+          </>
+        )}
+      </motion.button>
+    </motion.div>
   );
 };
 
