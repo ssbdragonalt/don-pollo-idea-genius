@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { extractPlanUpdates } from '@/utils/aiUtils';
+import { toast } from "sonner";
 import ChatInterface from './ChatInterface';
 import VoiceControls from './VoiceControls';
 import ChickenAvatar from './ChickenAvatar';
@@ -56,6 +57,7 @@ const AiInteraction = ({ currentPlan, onPlanUpdate }: AiInteractionProps) => {
       if (planUpdates) {
         console.log('Extracted plan updates:', planUpdates);
         await onPlanUpdate(planUpdates);
+        toast.success("Startup plan updated!");
       }
       
       // Remove the JSON block from the displayed message

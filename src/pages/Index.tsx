@@ -1,11 +1,13 @@
 import { motion } from "framer-motion";
 import { useAuth } from "@clerk/clerk-react";
+import { useRef, useState } from "react";
 import AuthWrapper from "../components/AuthWrapper";
 import StartupPlanEditor from "../components/StartupPlanEditor";
 import AiInteraction from "../components/AiInteraction";
 
 const Index = () => {
-  const startupPlanRef = useRef<{ updatePlanFromAI: (updates: any) => void }>(null);
+  const [currentPlan, setCurrentPlan] = useState(null);
+  const startupPlanRef = useRef(null);
 
   const handlePlanUpdate = (updates: any) => {
     if (startupPlanRef.current) {
@@ -34,11 +36,13 @@ const Index = () => {
 
             <div className="relative flex flex-row items-start justify-between gap-8">
               <div className="w-1/2">
-                <AiInteraction onPlanUpdate={handlePlanUpdate} />
+                <AiInteraction currentPlan={currentPlan} onPlanUpdate={handlePlanUpdate} />
               </div>
 
               <div className="w-1/2">
-                <StartupPlanEditor ref={startupPlanRef} />
+                <StartupPlanEditor 
+                  onPlanUpdate={setCurrentPlan}
+                />
               </div>
             </div>
           </motion.div>

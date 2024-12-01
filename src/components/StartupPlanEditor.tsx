@@ -18,7 +18,11 @@ interface StartupPlan {
   is_public: boolean;
 }
 
-const StartupPlanEditor = () => {
+interface StartupPlanEditorProps {
+  onPlanUpdate?: (plan: StartupPlan | null) => void;
+}
+
+const StartupPlanEditor = ({ onPlanUpdate }: StartupPlanEditorProps) => {
   const { userId } = useAuth();
   const [plan, setPlan] = useState<StartupPlan>({
     name: "",
@@ -31,10 +35,7 @@ const StartupPlanEditor = () => {
 
   const formatUserId = (clerkId: string | null | undefined) => {
     if (!clerkId) return null;
-    // Remove 'user_' prefix and ensure UUID format
-    const cleanId = clerkId.replace('user_', '');
-    // Generate a deterministic UUID from the Clerk ID
-    return crypto.randomUUID();
+    return clerkId.replace('user_', '');
   };
 
   const savePlan = async () => {
@@ -72,13 +73,15 @@ const StartupPlanEditor = () => {
       }
 
       toast.success("Startup plan saved!");
+      if (onPlanUpdate) {
+        onPlanUpdate(plan);
+      }
     } catch (error) {
       console.error("Error saving plan:", error);
       toast.error("Failed to save startup plan");
     }
   };
 
-  // Load existing plan on component mount
   useEffect(() => {
     const loadPlan = async () => {
       if (!userId) return;
@@ -98,19 +101,24 @@ const StartupPlanEditor = () => {
       if (data) {
         console.log('Loaded plan:', data);
         setPlan(data);
+        if (onPlanUpdate) {
+          onPlanUpdate(data);
+        }
       }
     };
 
     loadPlan();
-  }, [userId]);
+  }, [userId, onPlanUpdate]);
 
-  // Function to update plan from AI suggestions
   const updatePlanFromAI = async (suggestions: Partial<StartupPlan>) => {
     if (!suggestions) return;
     
     console.log('Updating plan with AI suggestions:', suggestions);
     const updatedPlan = { ...plan, ...suggestions };
     setPlan(updatedPlan);
+    if (onPlanUpdate) {
+      onPlanUpdate(updatedPlan);
+    }
     await savePlan();
   };
 
